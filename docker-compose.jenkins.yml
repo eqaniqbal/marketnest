@@ -1,0 +1,44 @@
+services:
+
+  db-jenkins:
+    image: postgres:15-alpine
+    container_name: marketnest-db-jenkins
+    environment:
+      POSTGRES_USER: marketnest_user
+      POSTGRES_PASSWORD: marketnest
+      POSTGRES_DB: marketnest
+    volumes:
+      - postgres_data_jenkins:/var/lib/postgresql/data
+
+  backend-jenkins:
+    image: node:20-alpine
+    container_name: marketnest-backend-jenkins
+    working_dir: /app
+    command: sh -c "npm install && node server.js"
+    environment:
+      DATABASE_URL: postgresql://marketnest_user:marketnest@db-jenkins:5432/marketnest
+      JWT_SECRET: marketnest_super_secret_key_2024
+      PORT: 5001
+      FRONTEND_URL: http://13.228.25.21:3000
+      GEMINI_API_KEY: AIzaSyCATFph6lz3DalWZMdA5wqGjnzBLDR5i-M
+    ports:
+      - "5001:5001"
+    depends_on:
+      - db-jenkins
+    volumes:
+      - ./backend:/app
+
+  frontend-jenkins:
+    image: node:20-alpine
+    container_name: marketnest-frontend-jenkins
+    working_dir: /app
+    command: sh -c "npm install && npm run build && npx serve -s dist -l 3000"
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend-jenkins
+    volumes:
+      - ./frontend:/app
+
+volumes:
+  postgres_data_jenkins:
