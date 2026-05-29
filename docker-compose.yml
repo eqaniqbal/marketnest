@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+
+  db:
+    image: postgres:15-alpine
+    container_name: marketnest-db
+    environment:
+      POSTGRES_USER: marketnest_user
+      POSTGRES_PASSWORD: marketnest
+      POSTGRES_DB: marketnest
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  backend:
+    image: eqaniqbal/marketnest-backend
+    container_name: marketnest-backend
+    environment:
+      DATABASE_URL: postgresql://marketnest_user:marketnest@db:5432/marketnest
+      JWT_SECRET: marketnest_super_secret_key_2024
+      PORT: 5000
+      FRONTEND_URL: http://13.228.25.21
+      GEMINI_API_KEY: AIzaSyCATFph6lz3DalWZMdA5wqGjnzBLDR5i-M
+    ports:
+      - "5000:5000"
+    depends_on:
+      - db
+    volumes:
+      - ./backend/uploads:/app/uploads
+
+  frontend:
+    image: eqaniqbal/marketnest-frontend
+    container_name: marketnest-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
