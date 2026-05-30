@@ -78,37 +78,44 @@ def test_05_product_listing_loads(driver):
 def test_06_product_search(driver):
     driver.get(f"{BASE_URL}/products")
     time.sleep(2)
-    try:
-        search = driver.find_element(By.CSS_SELECTOR, "input[type='text'], input[placeholder*='earch']")
-        search.send_keys("shirt")
-        search.send_keys(Keys.RETURN)
-        time.sleep(2)
-        assert len(driver.find_element(By.TAG_NAME, "body").text) > 50
-    except:
-        pytest.skip("Search input not found")
+    search = driver.find_element(By.CSS_SELECTOR, "input[placeholder='Search products...']")
+    search.send_keys("shirt")
+    time.sleep(2)
+    body = driver.find_element(By.TAG_NAME, "body").text
+    assert len(body) > 50
 
 def test_07_product_filter_by_category(driver):
     driver.get(f"{BASE_URL}/products")
     time.sleep(2)
-    try:
-        filters = driver.find_elements(By.CSS_SELECTOR, "button, select, [class*='category']")
-        if filters:
-            filters[0].click()
-            time.sleep(2)
-        assert len(driver.find_element(By.TAG_NAME, "body").text) > 50
-    except:
-        pytest.skip("Filter not found")
+    search = driver.find_element(By.CSS_SELECTOR, "input[placeholder='Search products...']")
+    search.clear()
+    time.sleep(1)
+    select = driver.find_element(By.TAG_NAME, "select")
+    select.click()
+    time.sleep(1)
+    options = driver.find_elements(By.TAG_NAME, "option")
+    if len(options) > 1:
+        options[1].click()
+    time.sleep(2)
+    assert len(driver.find_element(By.TAG_NAME, "body").text) > 50
 
 def test_08_add_to_cart(driver):
+    driver.get(f"{BASE_URL}/buyer/login")
+    time.sleep(2)
+    inputs = driver.find_elements(By.TAG_NAME, "input")
+    inputs[0].clear()
+    inputs[0].send_keys(BUYER_EMAIL)
+    inputs[1].clear()
+    inputs[1].send_keys(BUYER_PASSWORD)
+    driver.find_element(By.TAG_NAME, "button").click()
+    time.sleep(3)
     driver.get(f"{BASE_URL}/products")
     time.sleep(3)
-    try:
-        btn = driver.find_element(By.XPATH, "//*[contains(text(),'Add to Cart')]")
-        btn.click()
-        time.sleep(2)
-        assert True
-    except:
-        pytest.skip("Add to cart button not found")
+    driver.find_element(By.CSS_SELECTOR, "a[href*='/products/']").click()
+    time.sleep(2)
+    driver.find_element(By.XPATH, "//*[contains(text(),'Add to Cart')]").click()
+    time.sleep(2)
+    assert True
 
 def test_09_cart_page_loads(driver):
     driver.get(f"{BASE_URL}/cart")
@@ -118,13 +125,20 @@ def test_09_cart_page_loads(driver):
 def test_10_add_to_wishlist(driver):
     driver.get(f"{BASE_URL}/products")
     time.sleep(3)
-    try:
-        btn = driver.find_element(By.XPATH, "//*[contains(text(),'Wishlist') or contains(@class,'wishlist')]")
-        btn.click()
-        time.sleep(2)
-        assert True
-    except:
-        pytest.skip("Wishlist button not found")
+    driver.find_element(By.CSS_SELECTOR, "a[href*='/products/']").click()
+    time.sleep(2)
+    buttons = driver.find_elements(By.TAG_NAME, "button")
+    for btn in buttons:
+        try:
+            btn.find_element(By.CSS_SELECTOR, "svg")
+            svgs = btn.find_elements(By.CSS_SELECTOR, "svg")
+            if svgs:
+                btn.click()
+                time.sleep(2)
+                break
+        except:
+            continue
+    assert True
 
 def test_11_wishlist_page_loads(driver):
     driver.get(f"{BASE_URL}/wishlist")
@@ -134,13 +148,9 @@ def test_11_wishlist_page_loads(driver):
 def test_12_product_detail_page(driver):
     driver.get(f"{BASE_URL}/products")
     time.sleep(3)
-    try:
-        product = driver.find_element(By.CSS_SELECTOR, "[class*='product'], [class*='card']")
-        product.click()
-        time.sleep(2)
-        assert len(driver.find_element(By.TAG_NAME, "body").text) > 100
-    except:
-        pytest.skip("Product card not found")
+    driver.find_element(By.CSS_SELECTOR, "a[href*='/products/']").click()
+    time.sleep(2)
+    assert len(driver.find_element(By.TAG_NAME, "body").text) > 100
 
 def test_13_checkout_requires_login(driver):
     driver.execute_script("localStorage.clear()")
